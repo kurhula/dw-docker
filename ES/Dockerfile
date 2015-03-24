@@ -2,9 +2,30 @@ FROM ajaydivakaran/dw-ubuntu-base:latest
 
 MAINTAINER ajaydivakaran
 
-RUN wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.13.deb && dpkg -i elasticsearch-0.90.13.deb
+ENV ES_PKG_NAME elasticsearch-0.90.13
 
+# Install Elasticsearch.
+RUN \
+cd / && \
+wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$ES_PKG_NAME.tar.gz && \
+tar xvzf $ES_PKG_NAME.tar.gz && \
+rm -f $ES_PKG_NAME.tar.gz && \
+mv /$ES_PKG_NAME /elasticsearch
+
+# Define mountable directories.
+VOLUME ["/data"]
+
+# Mount elasticsearch.yml config
+ADD config/elasticsearch.yml /elasticsearch/config/elasticsearch.yml
+
+RUN sed -i -- "s/<fqdn>/$(cat /etc/hostname)/" /elasticsearch/config/elasticsearch.yml
+
+# Define default command.
+CMD ["/elasticsearch/bin/elasticsearch", "-f"]
+
+# Expose ports.
+# - 9200: HTTP
+# - 9300: transport
 EXPOSE 9200
-
-CMD /bin/bash
+EXPOSE 9300
 
